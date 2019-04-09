@@ -184,19 +184,10 @@ fn_update_steamcmd_check(){
 		fn_script_log_pass "Checking for update: SteamCMD: Update available"
 		echo -e "\n"
 		echo -e "Update available:"
-		sleep 0.5
 		echo -e "	Current build: ${red}${currentbuild}${default}"
 		echo -e "	Available build: ${green}${availablebuild}${default}"
 		echo -e "	https://steamdb.info/app/${appid}/"
-		sleep 0.5
 		echo ""
-		echo -en "Applying update.\r"
-		sleep 1
-		echo -en "Applying update..\r"
-		sleep 1
-		echo -en "Applying update...\r"
-		sleep 1
-		echo -en "\n"
 		fn_script_log_info "Update available"
 		fn_script_log_info "Current build: ${currentbuild}"
 		fn_script_log_info "Available build: ${availablebuild}"
@@ -207,8 +198,8 @@ fn_update_steamcmd_check(){
 		fn_script_log_pass "Checking for update: SteamCMD: No update available"
 		echo -e "\n"
 		echo -e "No update available:"
-		echo -e "	Current version: ${green}${currentbuild}${default}"
-		echo -e "	Available version: ${green}${availablebuild}${default}"
+		echo -e "	Current build: ${green}${currentbuild}${default}"
+		echo -e "	Available build: ${green}${availablebuild}${default}"
 		echo -e "	https://steamdb.info/app/${appid}/"
 		echo -e ""
 		fn_script_log_info "Current build: ${currentbuild}"
