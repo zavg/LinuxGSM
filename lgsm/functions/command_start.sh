@@ -25,14 +25,6 @@ fn_start_teamspeak3(){
 		touch "${servercfgfullpath}"
 	fi
 	sleep 0.5
-	check_status.sh
-	if [ "${status}" != "0" ]; then
-		fn_print_info_nl "${servername} is already running"
-		fn_script_log_error "${servername} is already running"
-		if [ -z "${exitbypass}" ]; then
-			core_exit.sh
-		fi
-	fi
 	if [ -f "${lgsmlog}" ]; then
 		mv "${lgsmlog}" "${lgsmlogdate}"
 	fi
@@ -40,11 +32,7 @@ fn_start_teamspeak3(){
 	date > "${rootdir}/${lockselfname}"
 	# Accept license
 	if [ ! -f "${executabledir}/.ts3server_license_accepted" ]; then
-		fn_script_log "Accepting ts3server license:  ${executabledir}/LICENSE"
-		fn_print_info_nl "Accepting TeamSpeak license:"
-		echo " * ${executabledir}/LICENSE"
-		sleep 3
-		touch "${executabledir}/.ts3server_license_accepted"
+		install_eula.sh
 	fi
 	cd "${executabledir}"
 	if [ "${ts3serverpass}" == "1" ]; then
@@ -66,8 +54,11 @@ fn_start_teamspeak3(){
 }
 
 fn_start_tmux(){
-	fn_parms
-
+	if [ "${parmsbypass}" ]; then
+		parms=""
+	else
+		fn_parms
+	fi
 	# check for tmux size variables
 	if [[ "${servercfgtmuxwidth}" =~ ^[0-9]+$ ]]; then
 		sessionwidth="${servercfgtmuxwidth}"
@@ -81,32 +72,21 @@ fn_start_tmux(){
 	fi
 
 	# Log rotation
-	check_status.sh
-	if [ "${status}" == "0" ]; then
-		fn_script_log_info "Rotating log files"
-		if [ "${engine}" == "unreal2" ]; then
-			if [ -f "${gamelog}" ]; then
-				mv "${gamelog}" "${gamelogdate}"
-			fi
-		fi
-		mv "${lgsmlog}" "${lgsmlogdate}"
-		mv "${consolelog}" "${consolelogdate}"
+	fn_script_log_info "Rotating log files"
+	if [ "${engine}" == "unreal2" ]&&[ -f "${gamelog}" ]; then
+		mv "${gamelog}" "${gamelogdate}"
 	fi
-
-	# If server is already running exit
-	check_status.sh
-	if [ "${status}" != "0" ]; then
-		fn_print_info_nl "${servername} is already running"
-		fn_script_log_error "${servername} is already running"
-		if [ -z "${exitbypass}" ]; then
-			core_exit.sh
-		fi
+	if [ -f "${lgsmlog}" ]; then
+		mv "${lgsmlog}" "${lgsmlogdate}"
+	fi
+	if [ -f "${consolelog}" ]; then
+		mv "${consolelog}" "${consolelogdate}"
 	fi
 
 	# Create lockfile
 	date > "${rootdir}/${lockselfname}"
 	cd "${executabledir}"
-	tmux new-session -d -x "${sessionheight}" -y "${sessionwidth}" -s "${servicename}" "${executable} ${parms}" 2> "${lgsmlogdir}/.${servicename}-tmux-error.tmp"
+	tmux new-session -d -x "${sessionwidth}" -y "${sessionheight}" -s "${servicename}" "${executable} ${parms}" 2> "${lgsmlogdir}/.${servicename}-tmux-error.tmp"
 
 	# Create logfile
 	touch "${consolelog}"
@@ -209,20 +189,28 @@ sleep 0.5
 fn_print_dots "${servername}"
 sleep 0.5
 check.sh
-fix.sh
+# Is the server already started
+if [ "${status}" != "0" ]; then # $status comes from check_status.sh, which is run by check.sh for this command
+	fn_print_info_nl "${servername} is already running"
+	fn_script_log_error "${servername} is already running"
+	if [ -z "${exitbypass}" ]; then
+		core_exit.sh
+	fi
+fi
+if [ -z "${fixbypass}" ];then
+	fix.sh
+fi
 info_config.sh
 logs.sh
 
 # Will check for updates is updateonstart is yes
-if [ "${status}" == "0" ]; then
-	if [ "${updateonstart}" == "yes" ]||[ "${updateonstart}" == "1" ]||[ "${updateonstart}" == "on" ]; then
-		exitbypass=1
-		unset updateonstart
-		command_update.sh
-	fi
+if [ "${updateonstart}" == "yes" ]||[ "${updateonstart}" == "1" ]||[ "${updateonstart}" == "on" ]; then
+	exitbypass=1
+	unset updateonstart
+	command_update.sh
 fi
 
-if [ "${gamename}" == "TeamSpeak 3" ]; then
+if [ "${shortname}" == "ts3" ]; then
 	fn_start_teamspeak3
 else
 	fn_start_tmux
