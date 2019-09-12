@@ -155,11 +155,16 @@ fn_info_message_gameserver(){
 			echo -e "${blue}Server IP:\t${default}${ip}:${port}"
 		fi
 
-		# External server ip
+		# Internet ip
 		if [ -n "${extip}" ]; then
 			if [ "${ip}" != "${extip}" ]; then
 				echo -e "${blue}Internet IP:\t${default}${extip}:${port}"
 			fi
+		fi
+
+		# Display ip
+		if [ -n "${displayip}" ]; then
+			echo -e "${blue}Display IP:\t${default}${displayip}:${port}"
 		fi
 
 		# Server password
@@ -324,11 +329,11 @@ fn_info_message_gameserver(){
 		fi
 
 		# Listed on Master Server
-		if [ "${masterserver}" ];then
-			if [ "${masterserver}" == "true" ];then
-				echo -e "${blue}Master Server:\t${green}${masterserver}${default}"
+		if [ "${displaymasterserver}" ];then
+			if [ "${displaymasterserver}" == "true" ];then
+				echo -e "${blue}Master Server:\t${green}${displaymasterserver}${default}"
 			else
-				echo -e "${blue}Master Server:\t${red}${masterserver}${default}"
+				echo -e "${blue}Master Server:\t${red}${displaymasterserver}${default}"
 			fi
 		fi
 
@@ -369,15 +374,16 @@ fn_info_message_script(){
 		echo -e "${blue}User:\t${default}$(whoami)"
 
 		# glibc required
-		if [ -n "${glibcrequired}" ]; then
-			if [ "${glibcrequired}" == "NOT REQUIRED" ]; then
-					:
-			elif [ "${glibcrequired}" == "UNKNOWN" ]; then
-				echo -e "${blue}glibc required:\t${red}${glibcrequired}"
-			elif [ "$(printf '%s\n'${glibcrequired}'\n' ${glibcversion} | sort -V | head -n 1)" != "${glibcrequired}" ]; then
-				echo -e "${blue}glibc required:\t${red}${glibcrequired} ${default}(${red}glibc distro version ${glibcversion} too old${default})"
+		if [ -n "${glibc}" ]; then
+			if [ "${glibc}" == "null" ]; then
+				# Glibc is not required.
+				:
+			elif [ -z "${glibc}" ]; then
+				echo -e "${blue}glibc required:\t${red}UNKNOWN${default}"
+			elif [ "$(printf '%s\n'${glibc}'\n' ${glibcversion} | sort -V | head -n 1)" != "${glibc}" ]; then
+				echo -e "${blue}glibc required:\t${red}${glibc} ${default}(${red}distro glibc ${glibcversion} too old${default})"
 			else
-				echo -e "${blue}glibc required:\t${green}${glibcrequired}${default}"
+				echo -e "${blue}glibc required:\t${green}${glibc}${default}"
 			fi
 		fi
 
@@ -495,7 +501,7 @@ fn_info_message_ports(){
 		fi
 	done
 	# engines/games that require editing the parms
-	local ports_edit_array=( "goldsource" "Factorio" "Hurtworld" "iw3.0" "ioquake3" "Rust" "spark" "source" "starbound" "unreal4" "realvirtuality" "Unturned")
+	local ports_edit_array=( "goldsource" "Factorio" "Hurtworld" "iw3.0" "ioquake3" "Rust" "Soldat" "spark" "source" "starbound" "unreal4" "realvirtuality" "Unturned" )
 	for port_edit in "${ports_edit_array[@]}"
 	do
 		if [ "${engine}" == "${port_edit}" ]||[ "${gamename}" == "${port_edit}" ]||[ "${shortname}" == "${port_edit}" ]; then
@@ -942,6 +948,15 @@ fn_info_message_sdtd(){
 	} | column -s $'\t' -t
 }
 
+fn_info_message_sof2(){
+	echo -e "netstat -atunp | grep sof2ded"
+	echo -e ""
+	{
+		echo -e "DESCRIPTION\tDIRECTION\tPORT\tPROTOCOL"
+		echo -e "> Game/Query\tINBOUND\t${port}\tudp"
+	} | column -s $'\t' -t
+}
+
 fn_info_message_source(){
 	echo -e "netstat -atunp | grep srcds_linux"
 	echo -e ""
@@ -1190,83 +1205,110 @@ fn_info_message_mordhau(){
 	} | column -s $'\t' -t
 }
 
+fn_info_message_barotrauma(){
+	echo "netstat -atunp | grep /./Server.bin"
+	echo -e ""
+	{
+		echo -e "DESCRIPTION\tDIRECTION\tPORT\tPROTOCOL"
+		echo -e "> Game\tINBOUND\t${port}\tudp"
+		echo -e "> Query\tINBOUND\t$((port+1))\tudp"
+	} | column -s $'\t' -t
+}
+
+fn_info_message_soldat() {
+	echo "netstat -atunp | grep soldat"
+	echo -e ""
+	{
+		echo -e "DESCRIPTION\tDIRECTION\tPORT\tPROTOCOL"
+		echo -e "> Game\tINBOUND\t${port}\tudp"
+		echo -e "> RCON\tINBOUND\t${port}\ttcp"
+		echo -e "> FILES\tINBOUND\t$((port+10))\ttcp"
+	} | column -s $'\t' -t
+}
+
 fn_info_message_select_engine(){
 	# Display details depending on game or engine.
-	if [ "${gamename}" == "7 Days To Die" ]; then
+	if [ "${shortname}" == "sdtd" ]; then
 		fn_info_message_sdtd
-	elif [ "${gamename}" == "ARK: Survival Evolved" ]; then
+	elif [ "${shortname}" == "ark" ]; then
 		fn_info_message_ark
-	elif [ "${gamename}" == "Ballistic Overkill" ]; then
+	elif [ "${shortname}" == "bo" ]; then
 		fn_info_message_ballisticoverkill
-	elif [ "${gamename}" == "Battalion 1944" ]; then
+	elif [ "${shortname}" == "bt" ]; then
+		fn_info_message_barotrauma
+	elif [ "${shortname}" == "bt1944" ]; then
 		fn_info_message_battalion1944
-	elif [ "${gamename}" == "Call of Duty" ]; then
+	elif [ "${shortname}" == "cod" ]; then
 		fn_info_message_cod
-	elif [ "${gamename}" == "Call of Duty: United Offensive" ]; then
+	elif [ "${shortname}" == "coduo" ]; then
 		fn_info_message_coduo
-	elif [ "${gamename}" == "Call of Duty 2" ]; then
+	elif [ "${shortname}" == "cod2" ]; then
 		fn_info_message_cod2
-	elif [ "${gamename}" == "Call of Duty 4" ]; then
+	elif [ "${shortname}" == "cod4" ]; then
 		fn_info_message_cod4
-	elif [ "${gamename}" == "Call of Duty: World at War" ]; then
+	elif [ "${shortname}" == "codwaw" ]; then
 		fn_info_message_codwaw
-	elif [ "${gamename}" == "Eco" ]; then
+	elif [ "${shortname}" == "eco" ]; then
 		fn_info_message_eco
-	elif [ "${gamename}" == "ET: Legacy" ]; then
+	elif [ "${shortname}" == "etl" ]; then
 		fn_info_message_etlegacy
-	elif [ "${gamename}" == "Factorio" ]; then
+	elif [ "${shortname}" == "fctr" ]; then
 		fn_info_message_factorio
-	elif [ "${gamename}" == "Hurtworld" ]; then
+	elif [ "${shortname}" == "hw" ]; then
 		fn_info_message_hurtworld
 	elif [ "${shortname}" == "inss" ]; then
 		fn_info_message_inss
-	elif [ "${gamename}" == "Just Cause 2" ]; then
+	elif [ "${shortname}" == "jc2" ]; then
 		fn_info_message_justcause2
-	elif [ "${gamename}" == "Just Cause 3" ]; then
+	elif [ "${shortname}" == "jc3" ]; then
 		fn_info_message_justcause3
 	elif [ "${shortname}" == "kf2" ]; then
 		fn_info_message_kf2
 	elif [ "${shortname}" == "pstbs" ]; then
 		fn_info_message_pstbs
-	elif [ "${gamename}" == "Project Cars" ]; then
+	elif [ "${shortname}" == "pc" ]; then
 		fn_info_message_projectcars
-	elif [ "${gamename}" == "QuakeWorld" ]; then
+	elif [ "${shortname}" == "qw" ]; then
 		fn_info_message_quake
-	elif [ "${gamename}" == "Quake 2" ]; then
+	elif [ "${shortname}" == "q2" ]; then
 		fn_info_message_quake2
-	elif [ "${gamename}" == "Quake 3: Arena" ]; then
+	elif [ "${shortname}" == "q3" ]; then
 		fn_info_message_quake3
-	elif [ "${gamename}" == "Quake Live" ]; then
+	elif [ "${shortname}" == "ql" ]; then
 		fn_info_message_quakelive
-	elif [ "${gamename}" == "San Andreas Multiplayer" ]; then
+	elif [ "${shortname}" == "samp" ]; then
 		fn_info_message_samp
-	elif [ "${gamename}" == "Squad" ]; then
+	elif [ "${shortname}" == "squad" ]; then
 		fn_info_message_squad
-	elif [ "${gamename}" == "Stationeers" ]; then
+	elif [ "${shortname}" == "st" ]; then
 		fn_info_message_stationeers
+	elif [ "${shortname}" == "sof2" ]; then
+	  fn_info_message_sof2
+	elif [ "${shortname}" == "sol" ]; then
+		fn_info_message_soldat
 	elif [ "${shortname}" == "sbots" ]; then
 		fn_info_message_sbots
-	elif [ "${gamename}" == "TeamSpeak 3" ]; then
+	elif [ "${shortname}" == "ts3" ]; then
 		fn_info_message_teamspeak3
-	elif [ "${gamename}" == "Tower Unite" ]; then
+	elif [ "${shortname}" == "tu" ]; then
 		fn_info_message_towerunite
 	elif [ "${shortname}" == "unt" ]; then
 		fn_info_message_unturned
 	elif [ "${shortname}" == "mh" ]; then
 		fn_info_message_mordhau
-	elif [ "${gamename}" == "Multi Theft Auto" ]; then
+	elif [ "${shortname}" == "mta" ]; then
 		fn_info_message_mta
-	elif [ "${gamename}" == "Mumble" ]; then
+	elif [ "${shortname}" == "mumble" ]; then
 		fn_info_message_mumble
-	elif [ "${gamename}" == "Return to Castle Wolfenstein" ]; then
+	elif [ "${shortname}" == "rtcw" ]; then
 		fn_info_message_rtcw
-	elif [ "${gamename}" == "Rust" ]; then
+	elif [ "${shortname}" == "rust" ]; then
 		fn_info_message_rust
-	elif [ "${gamename}" == "Wurm Unlimited" ]; then
+	elif [ "${shortname}" == "wurm" ]; then
 		fn_info_message_wurmunlimited
 	elif [ "${shortname}" == "rw" ]; then
 		fn_info_message_risingworld
-	elif [ "${gamename}" == "Wolfenstein: Enemy Territory" ]; then
+	elif [ "${shortname}" == "wet" ]; then
 		fn_info_message_wolfensteinenemyterritory
 	elif [ "${engine}" == "refractor" ]; then
 		fn_info_message_refractor

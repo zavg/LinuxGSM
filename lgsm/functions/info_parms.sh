@@ -22,6 +22,11 @@ fn_info_parms_ark(){
 	maxplayers=${maxplayers:-"0"}
 }
 
+fn_info_parms_barotrauma(){
+	port=${port:-"0"}
+	queryport=${queryport:-"0"}
+}
+
 fn_info_parms_realvirtuality(){
 	port=${port:-"0"}
 	queryport=$((port + 1))
@@ -111,6 +116,11 @@ fn_info_parms_rust(){
 	tickrate=${tickrate:-"0"}
 }
 
+fn_info_parms_sof2(){
+	port=${port:-"0"}
+	defaultmap=${defaultmap:-"NOT SET"}
+}
+
 fn_info_parms_source(){
 	defaultmap=${defaultmap:-"NOT SET"}
 	maxplayers=${maxplayers:-"0"}
@@ -138,6 +148,21 @@ fn_info_parms_stickybots(){
 	servername=${servername:-"NOT SET"}
 	serverpassword=${serverpassword:-"NOT SET"}
 	defaultmap=${defaultmap:-"NOT SET"}
+	maxplayers=${maxplayers:-"0"}
+}
+
+fn_info_parms_sof2(){
+	port=${port:-"0"}
+	queryport=${port}
+	defaultmap=${defaultmap:-"NOT SET"}
+}
+
+fn_info_parms_soldat(){
+	port=${port:-"0"}
+	queryport=${port}
+	servername=${servername:-"NOT SET"}
+	serverpassword=${serverpassword:-"NOT SET"}
+	adminpassword=${adminpassword:-"NOT SET"}
 	maxplayers=${maxplayers:-"0"}
 }
 
@@ -186,6 +211,9 @@ if [ "${shortname}" == "ark" ]; then
 # ARMA 3
 elif [ "${shortname}" == "arma3" ]; then
 	fn_info_parms_realvirtuality
+# Barotrauma
+elif [ "${shortname}" == "bt" ]; then
+	fn_info_parms_barotrauma
 # Call of Duty
 elif [ "${shortname}" == "cod" ]||[ "${shortname}" == "coduo" ]||[ "${engine}" == "iw2.0" ]||[ "${engine}" == "iw3.0" ]; then
 	fn_info_parms_cod
@@ -214,9 +242,14 @@ elif [ "${shortname}" == "rust" ]; then
 # Rising World
 elif [ "${shortname}" == "rw" ]; then
 	fn_info_parms_risingworld
+# Soldier Of Fortune 2: Gold Edition
+elif [ "${shortname}" == "sof2" ]; then
+	fn_info_parms_sof2
 # Sticky Bots
 elif [ "${shortname}" == "sbots" ]; then
 	fn_info_parms_stickybots
+elif [ "${shortname}" == "sol" ]; then
+	fn_info_parms_soldat
 # Serious Sam
 elif [ "${shortname}" == "ss3" ]; then
 	fn_info_parms_seriousengine35
