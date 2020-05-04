@@ -2,9 +2,9 @@
 # LinuxGSM fix_rust.sh function
 # Author: Daniel Gibbs
 # Website: https://linuxgsm.com
-# Description: Resolves startup issue with Rust
+# Description: Resolves startup issue with Rust.
 
-local commandname="FIX"
+local modulename="FIX"
 local commandaction="Fix"
 
 # Fixes: [Raknet] Server Shutting Down (Shutting Down).

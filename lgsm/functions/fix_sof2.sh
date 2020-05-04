@@ -2,10 +2,10 @@
 # LinuxGSM fix_rust.sh function
 # Author: Daniel Gibbs
 # Website: https://linuxgsm.com
-# Description: Resolves startup issue with Soldier of Fortune 2
+# Description: Resolves various issues with Soldier of Fortune 2.
 
-local commandname="FIX"
+local modulename="FIX"
 local commandaction="Fix"
 
 # Fixes: error while loading shared libraries: libcxa.so.1
-export LD_LIBRARY_PATH=":$LD_LIBRARY_PATH"
+export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:${serverfiles}"

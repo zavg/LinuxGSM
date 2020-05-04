@@ -5,7 +5,7 @@
 # Website: https://linuxgsm.com
 # Description: Core functions for mods list/install/update/remove
 
-local commandname="MODS"
+local modulename="MODS"
 local commandaction="Mods"
 local function_selfname="$(basename "$(readlink -f "${BASH_SOURCE[0]}")")"
 
@@ -43,10 +43,10 @@ fn_mod_lowercase(){
 		fileswc=$(find "${extractdir}" -depth | wc -l)
 		echo -en "\r"
 		while read -r src; do
-			dst="$(dirname "${src}$(/)basename" "${src}" | tr 'A-Z' 'a-z')"
+			dst=$(dirname "${src}$(/)basename" "${src}" | tr '[:upper:]' '[:lower:]')
 			if [ "${src}" != "${dst}" ]
 			then
-				[ ! -e "${dst}" ] && mv -T "${src}" "${dst}" || echo "${src} was not renamed"
+				[ ! -e "${dst}" ] && mv -T "${src}" "${dst}" || echo -e "${src} was not renamed"
 				local exitcode=$?
 				((renamedwc++))
 			fi
@@ -104,8 +104,8 @@ fn_mod_copy_destination(){
 
 # Add the mod to the installed-mods.txt.
 fn_mod_add_list(){
-	if [ ! -n "$(sed -n "/^${modcommand}$/p" "${modsinstalledlistfullpath}")" ]; then
-		echo "${modcommand}" >> "${modsinstalledlistfullpath}"
+	if [ -z "$(sed -n "/^${modcommand}$/p" "${modsinstalledlistfullpath}")" ]; then
+		echo -e "${modcommand}" >> "${modsinstalledlistfullpath}"
 		fn_script_log_info "${modcommand} added to ${modsinstalledlist}"
 	fi
 }
@@ -122,11 +122,11 @@ fn_mod_tidy_files_list(){
 	removefromlist="cfg;addons;RustDedicated_Data;RustDedicated_Data\/Managed;RustDedicated_Data\/Managed\/x86;RustDedicated_Data\/Managed\/x64;"
 	# Loop through files to remove from file list,
 	# generate elements to remove from list.
-	removefromlistamount="$(echo "${removefromlist}" | awk -F ';' '{ print NF }')"
+	removefromlistamount=$(echo -e "${removefromlist}" | awk -F ';' '{ print NF }')
 	# Test all subvalue of "removefromlist" using the ";" separator.
 	for ((filesindex=1; filesindex < removefromlistamount; filesindex++)); do
 		# Put current file into test variable.
-		removefilevar="$(echo "${removefromlist}" | awk -F ';' -v x=${filesindex} '{ print $x }')"
+		removefilevar=$(echo -e "${removefromlist}" | awk -F ';' -v x=${filesindex} '{ print $x }')
 		# Delete line(s) matching exactly.
 		sed -i "/^${removefilevar}$/d" "${modsdir}/${modcommand}-files.txt"
 		# Exit on error.
@@ -228,7 +228,7 @@ fn_mods_define(){
 if [ -z "$index" ]; then
 	fn_script_log_fatal "index variable not set. Please report an issue."
 	fn_print_error "index variable not set. Please report an issue."
-	echo "* https://github.com/GameServerManagers/LinuxGSM/issues"
+	echo -e "* https://github.com/GameServerManagers/LinuxGSM/issues"
 	core_exit.sh
 fi
 	modcommand="${mods_global_array[index+1]}"
@@ -259,7 +259,7 @@ fn_mods_installed_list(){
 	modcommandmaxlength="0"
 	# Loop through every line of the installed mods list ${modsinstalledlistfullpath}.
 	while [ "${installedmodsline}" -le "${installedmodscount}" ]; do
-		currentmod="$(sed "${installedmodsline}q;d" "${modsinstalledlistfullpath}")"
+		currentmod=$(sed "${installedmodsline}q;d" "${modsinstalledlistfullpath}")
 		# Get mod info to make sure mod exists.
 		fn_mod_get_info
 		# Add the mod to available commands.
@@ -267,7 +267,7 @@ fn_mods_installed_list(){
 		# Increment line check.
 		((installedmodsline++))
 	done
-	if [ -n "${installedmodscount}" ]; then
+	if [ "${installedmodscount}" ]; then
 		fn_script_log_info "${installedmodscount} addons/mods are currently installed"
 	fi
 }
@@ -306,11 +306,11 @@ fn_compatible_mod_games(){
 	# If value is set to GAMES (ignore).
 	if [ "${modgames}" != "GAMES" ]; then
 		# How many games we need to test.
-		gamesamount="$(echo "${modgames}" | awk -F ';' '{ print NF }')"
+		gamesamount=$(echo -e "${modgames}" | awk -F ';' '{ print NF }')
 		# Test all subvalue of "modgames" using the ";" separator.
 		for ((gamevarindex=1; gamevarindex < gamesamount; gamevarindex++)); do
 			# Put current game name into modtest variable.
-			gamemodtest="$( echo "${modgames}" | awk -F ';' -v x=${gamevarindex} '{ print $x }' )"
+			gamemodtest=$( echo -e "${modgames}" | awk -F ';' -v x=${gamevarindex} '{ print $x }' )
 			# If game name matches.
 			if [ "${gamemodtest}" == "${gamename}" ]; then
 				# Mod is compatible.
@@ -327,11 +327,11 @@ fn_compatible_mod_engines(){
 	# If value is set to ENGINES (ignore).
 	if [ "${modengines}" != "ENGINES" ]; then
 		# How many engines we need to test.
-		enginesamount="$(echo "${modengines}" | awk -F ';' '{ print NF }')"
+		enginesamount=$(echo -e "${modengines}" | awk -F ';' '{ print NF }')
 		# Test all subvalue of "modengines" using the ";" separator.
 		for ((gamevarindex=1; gamevarindex < ${enginesamount}; gamevarindex++)); do
 			# Put current engine name into modtest variable.
-			enginemodtest="$( echo "${modengines}" | awk -F ';' -v x=${gamevarindex} '{ print $x }' )"
+			enginemodtest=$( echo -e "${modengines}" | awk -F ';' -v x=${gamevarindex} '{ print $x }' )
 			# If engine name matches.
 			if [ "${enginemodtest}" == "${engine}" ]; then
 				# Mod is compatible.
@@ -348,11 +348,11 @@ fn_not_compatible_mod_games(){
 	# If value is set to NOTGAMES (ignore).
 	if [ "${modexcludegames}" != "NOTGAMES" ]; then
 		# How many engines we need to test.
-		excludegamesamount="$(echo "${modexcludegames}" | awk -F ';' '{ print NF }')"
+		excludegamesamount=$(echo -e "${modexcludegames}" | awk -F ';' '{ print NF }')
 		# Test all subvalue of "modexcludegames" using the ";" separator.
 		for ((gamevarindex=1; gamevarindex < excludegamesamount; gamevarindex++)); do
 			# Put current engine name into modtest variable.
-			excludegamemodtest="$( echo "${modexcludegames}" | awk -F ';' -v x=${gamevarindex} '{ print $x }' )"
+			excludegamemodtest=$( echo -e "${modexcludegames}" | awk -F ';' -v x=${gamevarindex} '{ print $x }' )
 			# If engine name matches.
 			if [ "${excludegamemodtest}" == "${gamename}" ]; then
 				# Mod is compatible.
@@ -440,7 +440,7 @@ fn_mods_create_tmp_dir(){
 fn_mods_clear_tmp_dir(){
 	if [ -d "${modstmpdir}" ]; then
 		echo -en "clearing mod download directory ${modstmpdir}..."
-		rm -r "${modstmpdir}"
+		rm -fr "${modstmpdir:?}"
 		exitcode=$?
 		if [ ${exitcode} -ne 0 ]; then
 			fn_print_fail_eol_nl
@@ -454,14 +454,14 @@ fn_mods_clear_tmp_dir(){
 	fi
 	# Clear temp file list as well.
 	if [ -f "${modsdir}/.removedfiles.tmp" ]; then
-		rm "${modsdir}/.removedfiles.tmp"
+		rm -f "${modsdir:?}/.removedfiles.tmp"
 	fi
 }
 
 # Counts how many mods were installed.
 fn_mods_count_installed(){
 	if [ -f "${modsinstalledlistfullpath}" ]; then
-		installedmodscount="$(wc -l < "${modsinstalledlistfullpath}")"
+		installedmodscount=$(wc -l < "${modsinstalledlistfullpath}")
 	else
 		installedmodscount=0
 	fi
@@ -473,9 +473,9 @@ fn_mods_check_installed(){
 	fn_mods_count_installed
 	# If no mods are found.
 	if [ ${installedmodscount} -eq 0 ]; then
-		echo ""
+		echo -e ""
 		fn_print_failure_nl "No installed mods or addons were found"
-		echo " * Install mods using LinuxGSM first with: ./${selfname} mods-install"
+		echo -e " * Install mods using LinuxGSM first with: ./${selfname} mods-install"
 		fn_script_log_error "No installed mods or addons were found."
 		core_exit.sh
 	fi
@@ -486,11 +486,11 @@ fn_check_mod_files_list(){
 	# File list must exist and be valid before any operation on it.
 	if [ -f "${modsdir}/${modcommand}-files.txt" ]; then
 	# How many lines is the file list.
-		modsfilelistsize="$(wc -l < "${modsdir}/${modcommand}-files.txt")"
+		modsfilelistsize=$(wc -l < "${modsdir}/${modcommand}-files.txt")
 		# If file list is empty.
 		if [ "${modsfilelistsize}" -eq 0 ]; then
 			fn_print_failure "${modcommand}-files.txt is empty"
-			echo "* Unable to remove ${modprettyname}"
+			echo -e "* Unable to remove ${modprettyname}"
 			fn_script_log_fatal "${modcommand}-files.txt is empty: Unable to remove ${modprettyname}."
 			core_exit.sh
 		fi

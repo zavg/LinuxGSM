@@ -15,7 +15,7 @@ cmd_start=( "st;start" "command_start.sh" "Start the server." )
 cmd_stop=( "sp;stop" "command_stop.sh" "Stop the server." )
 cmd_restart=( "r;restart" "command_restart.sh" "Restart the server." )
 cmd_details=( "dt;details" "command_details.sh" "Display server information." )
-cmd_postdetails=( "pd;postdetails" "command_postdetails.sh" "Post details to hastebin (removing passwords)." )
+cmd_postdetails=( "pd;postdetails" "command_postdetails.sh" "Post details to termbin.com (removing passwords)." )
 cmd_backup=( "b;backup" "command_backup.sh" "Create backup archives of the server." )
 cmd_update_linuxgsm=( "ul;update-lgsm;uf;update-functions" "command_update_linuxgsm.sh" "Check and apply any LinuxGSM updates." )
 cmd_test_alert=( "ta;test-alert" "command_test_alert.sh" "Send a test alert." )
@@ -65,23 +65,21 @@ currentopt+=( "${cmd_update_linuxgsm[@]}" )
 if [ "${engine}" != "quake" ]&&[ "${engine}" != "idtech2" ]&&[ "${engine}" != "idtech3" ]&&[ "${engine}" != "iw2.0" ]&&[ "${engine}" != "iw3.0" ]&&[ "${shortname}" != "bf1942" ]&&[ "${shortname}" != "samp" ]; then
 	currentopt+=( "${cmd_update[@]}" "${cmd_update_check[@]}" )
 	# force update for SteamCMD only or MTA
-	if [ -n "${appid}" ]||[ "${shortname}" == "mta" ]; then
+	if [ "${appid}" ]||[ "${shortname}" == "mta" ]; then
 		currentopt+=( "${cmd_force_update[@]}" )
 	fi
 fi
 
 # Validate command.
-if [ -n "${appid}" ]; then
+if [ "${appid}" ]; then
 	currentopt+=( "${cmd_validate[@]}" )
 fi
 
-#Backup.
+# Backup.
 currentopt+=( "${cmd_backup[@]}" )
 
-# Exclude games without a console.
-if [ "${shortname}" != "ts3" ]; then
-	currentopt+=( "${cmd_console[@]}" "${cmd_debug[@]}" )
-fi
+# Console & Debug
+currentopt+=( "${cmd_console[@]}" "${cmd_debug[@]}" )
 
 ## Game server exclusive commands.
 
@@ -146,18 +144,18 @@ currentopt+=( "${cmd_donate[@]}" )
 optcommands=()
 index="0"
 for ((index="0"; index < ${#currentopt[@]}; index+=3)); do
-	cmdamount="$(echo "${currentopt[index]}" | awk -F ';' '{ print NF }')"
-	for ((cmdindex=1; cmdindex <= ${cmdamount}; cmdindex++)); do
-		optcommands+=( "$(echo "${currentopt[index]}" | awk -F ';' -v x=${cmdindex} '{ print $x }')" )
+	cmdamount=$(echo -e "${currentopt[index]}" | awk -F ';' '{ print NF }')
+	for ((cmdindex=1; cmdindex <= cmdamount; cmdindex++)); do
+		optcommands+=( "$(echo -e "${currentopt[index]}" | awk -F ';' -v x=${cmdindex} '{ print $x }')" )
 	done
 done
 
 # Shows LinuxGSM usage.
 fn_opt_usage(){
-	echo "Usage: $0 [option]"
+	echo -e "Usage: $0 [option]"
 	echo -e ""
-	echo "LinuxGSM - ${gamename} - Version ${version}"
-	echo "https://linuxgsm.com/${gameservername}"
+	echo -e "LinuxGSM - ${gamename} - Version ${version}"
+	echo -e "https://linuxgsm.com/${gameservername}"
 	echo -e ""
 	echo -e "${lightyellow}Commands${default}"
 	# Display available commands.
@@ -166,30 +164,33 @@ fn_opt_usage(){
 	for ((index="0"; index < ${#currentopt[@]}; index+=3)); do
 		# Hide developer commands.
 		if [ "${currentopt[index+2]}" != "DEVCOMMAND" ]; then
-			echo -e "${cyan}$(echo "${currentopt[index]}" | awk -F ';' '{ print $2 }')\t${default}$(echo "${currentopt[index]}" | awk -F ';' '{ print $1 }')\t| ${currentopt[index+2]}"
+			echo -e "${cyan}$(echo -e "${currentopt[index]}" | awk -F ';' '{ print $2 }')\t${default}$(echo -e "${currentopt[index]}" | awk -F ';' '{ print $1 }')\t| ${currentopt[index+2]}"
 		fi
 	done
 	} | column -s $'\t' -t
+	fn_script_log_pass "Display commands"
 	core_exit.sh
 }
 
-# Check if user commands exist and run corresponding scripts, or display script usage.
+# Check if command existw and run corresponding scripts, or display script usage.
 if [ -z "${getopt}" ]; then
 	fn_opt_usage
 fi
-# Command exists.
+# If command exists.
 for i in "${optcommands[@]}"; do
 	if [ "${i}" == "${getopt}" ] ; then
 		# Seek and run command.
 		index="0"
 		for ((index="0"; index < ${#currentopt[@]}; index+=3)); do
-			currcmdamount="$(echo "${currentopt[index]}" | awk -F ';' '{ print NF }')"
-			for ((currcmdindex=1; currcmdindex <= ${currcmdamount}; currcmdindex++)); do
-				if [ "$(echo "${currentopt[index]}" | awk -F ';' -v x=${currcmdindex} '{ print $x }')" == "${getopt}" ]; then
+			currcmdamount=$(echo -e "${currentopt[index]}" | awk -F ';' '{ print NF }')
+			for ((currcmdindex=1; currcmdindex <= currcmdamount; currcmdindex++)); do
+				if [ "$(echo -e "${currentopt[index]}" | awk -F ';' -v x=${currcmdindex} '{ print $x }')" == "${getopt}" ]; then
 					# Run command.
 					eval "${currentopt[index+1]}"
+					# Exit should occur in modules. Should this not happen print an error
+					fn_print_error2_nl "Command did not exit correctly: ${getopt}"
+					fn_script_log_error "Command did not exit correctly: ${getopt}"
 					core_exit.sh
-					break
 				fi
 			done
 		done
@@ -197,7 +198,7 @@ for i in "${optcommands[@]}"; do
 done
 
 # If we're executing this, it means command was not found.
-echo -e "${red}Unknown command${default}: $0 ${getopt}"
-exitcode=2
+fn_print_error2_nl "Unknown command: $0 ${getopt}"
+fn_script_log_error "Unknown command: $0 ${getopt}"
 fn_opt_usage
 core_exit.sh
