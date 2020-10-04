@@ -152,9 +152,9 @@ fn_update_steamcmd_check(){
 
 	# Removes appinfo.vdf as a fix for not always getting up to date version info from SteamCMD
 
-	if [ -f "${HOME}/Steam/appcache/appinfo.vdf" ]; then
-		rm -f "${HOME}/Steam/appcache/appinfo.vdf"
-	fi
+  if [ "$(find "${HOME}" -type f -name "appinfo.vdf" | wc -l)" -ne "0"  ]; then
+    find "${HOME}" -type f -name "appinfo.vdf" -exec rm -f {} \;
+  fi
 
 	# Set branch for updateinfo
 	IFS=' ' read -ra branchsplits <<< "${branch}"
